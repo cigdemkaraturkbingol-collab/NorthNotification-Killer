@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity() {
         )
             .daemon(false)
             .processNameSuffix("notification_service")
-            .debuggable(BuildConfig.DEBUG)
+            .debuggable(false)
             .version(1)
     }
 
