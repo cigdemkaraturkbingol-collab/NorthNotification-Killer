@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kuzey Bildirim Kontrolü</title>
+<style>
+body{margin:0;background:#0f1115;color:#f4f6fb;font-family:system-ui,sans-serif}.wrap{max-width:900px;margin:auto;padding:16px}.card{background:#171a21;border:1px solid #2a2f3a;border-radius:18px;padding:14px;margin-bottom:14px}.row{display:flex;gap:10px;flex-wrap:wrap}button{border:0;border-radius:14px;padding:12px 14px;font-weight:700;color:white;background:#7c8cff}.danger{background:#ff5b6e}.good{background:#2fd47a;color:#07140d}.secondary{background:#20242d}.status{margin-top:10px;color:#9ca6b7}.app{display:flex;justify-content:space-between;gap:10px;align-items:center;border-top:1px solid #2a2f3a;padding:10px 0}.pkg{font-size:12px;color:#9ca6b7;word-break:break-all}.search{width:100%;box-sizing:border-box;background:#20242d;border:1px solid #2a2f3a;color:white;border-radius:13px;padding:12px;font-size:16px}
+</style>
+</head>
+<body><div class="wrap">
+<h1>🔕 Kuzey Bildirim Kontrolü</h1>
+<div class="card"><div class="row"><button onclick="requestShizuku()">Shizuku'ya Bağlan</button><button class="secondary" onclick="refreshStatus()">Durumu Yenile</button></div><div id="status" class="status">Kontrol ediliyor…</div></div>
+<div class="card"><div class="row"><button class="danger" onclick="bulk(false)">🔕 Hepsini Kapat</button><button class="good" onclick="bulk(true)">🔔 Hepsini Aç</button></div><label><input id="systemApps" type="checkbox" onchange="loadApps()"> Sistem uygulamalarını da göster</label></div>
+<div class="card"><input id="search" class="search" placeholder="Uygulama ara…" oninput="renderApps()"><div id="apps"></div></div>
+</div>
+<script>
+let apps=[];const $=id=>document.getElementById(id);function setStatus(t){$('status').textContent=t}function requestShizuku(){Android.requestShizuku();setTimeout(refreshStatus,600)}function refreshStatus(){try{const s=JSON.parse(Android.getStatus());if(s.serviceReady){setStatus('✅ Shizuku hazır');loadApps()}else if(s.binderAlive&&s.permission)setStatus('⏳ Servis bağlanıyor…');else if(s.binderAlive)setStatus('🟡 Shizuku izni gerekiyor');else setStatus('❌ Önce Shizuku’yu başlat')}catch(e){setStatus('Hata: '+e)}}window.onNativeStatus=(t,m)=>{setStatus((t==='ready'?'✅ ':t==='error'?'❌ ':'')+m);if(t==='ready')loadApps()};function loadApps(){try{apps=JSON.parse(Android.getApps($('systemApps').checked));renderApps()}catch(e){$('apps').textContent='Liste yüklenemedi: '+e}}function renderApps(){const q=$('search').value.toLowerCase();const f=apps.filter(a=>a.label.toLowerCase().includes(q)||a.packageName.toLowerCase().includes(q));$('apps').innerHTML=f.map(a=>`<div class="app"><div><b>${esc(a.label)}</b><div class="pkg">${esc(a.packageName)}</div></div><div class="row"><button class="danger" onclick="one('${a.packageName}',false)">Kapat</button><button class="good" onclick="one('${a.packageName}',true)">Aç</button></div></div>`).join('')||'Uygulama bulunamadı.'}function one(p,e){const r=Android.setNotifications(p,e);setStatus((e?'🔔 ':'🔕 ')+p+(r.startsWith('ERR:')?' — '+r:''))}function bulk(e){if(!confirm(e?'Listedeki bildirimleri aç?':'Listedeki bildirimleri kapat?'))return;try{const r=JSON.parse(Android.bulkSet(e,$('systemApps').checked));setStatus(`${e?'🔔':'🔕'} ${r.ok} başarılı, ${r.failed} başarısız`)}catch(x){setStatus('Hata: '+x)}}function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}setTimeout(refreshStatus,400)
+</script></body></html>
